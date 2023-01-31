@@ -10,9 +10,6 @@ import java.util.List;
 public class UserDaoJDBCImpl implements UserDao {
     private final Connection connection = Util.getConnection1();
 
-    public UserDaoJDBCImpl() {
-
-    }
 
     public void createUsersTable() {
         String sql = "CREATE TABLE IF NOT EXISTS users" +
@@ -20,10 +17,18 @@ public class UserDaoJDBCImpl implements UserDao {
                 "name VARCHAR(45)," +
                 "lastName VARCHAR(45)," +
                 "age TINYINT(3))";
+
         try (Statement statement = connection.createStatement()) {
+            connection.setAutoCommit(false);
             statement.executeUpdate(sql);
+            connection.commit();
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -31,9 +36,16 @@ public class UserDaoJDBCImpl implements UserDao {
         String sql = "DROP TABLE IF EXISTS users";
 
         try (Statement statement = connection.createStatement()) {
+            connection.setAutoCommit(false);
             statement.executeUpdate(sql);
+            connection.commit();
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -41,12 +53,19 @@ public class UserDaoJDBCImpl implements UserDao {
         String sql = "INSERT INTO users (name, lastName, age) VALUES (?,?,?)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
             statement.setString(1, name);
             statement.setString(2, lastName);
             statement.setByte(3, age);
             statement.executeUpdate();
+            connection.commit();
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -55,10 +74,17 @@ public class UserDaoJDBCImpl implements UserDao {
         String sql = "DELETE FROM users WHERE id = ?";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
             statement.setLong(1, id);
             statement.executeUpdate();
+            connection.commit();
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -66,6 +92,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
         List<User> list = new ArrayList<>();
         try (Statement statement = connection.createStatement()) {
+            connection.setAutoCommit(false);
             String sql = "SELECT * FROM users";
             ResultSet rs = statement.executeQuery(sql);
             while (rs.next()) {
@@ -73,18 +100,31 @@ public class UserDaoJDBCImpl implements UserDao {
                 user.setId(rs.getLong("id"));
                 list.add(user);
             }
+            connection.commit();
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
         }
         return list;
     }
 
     public void cleanUsersTable() {
         String sql = "DELETE FROM users";
+
         try (Statement statement = connection.createStatement()) {
+            connection.setAutoCommit(false);
             statement.executeUpdate(sql);
+            connection.commit();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                e.printStackTrace();
+            }
         }
     }
 }
